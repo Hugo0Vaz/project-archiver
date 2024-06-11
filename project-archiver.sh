@@ -1,6 +1,4 @@
 #!/bin/env bash
-#
-#
 #                     _           _                       _     _
 #     _ __  _ __ ___ (_) ___  ___| |_       __ _ _ __ ___| |__ (_)_   _____ _ __
 #    | '_ \| '__/ _ \| |/ _ \/ __| __|____ / _` | '__/ __| '_ \| \ \ / / _ \ '__|
@@ -21,7 +19,7 @@ ARG1="$2"
 ARG2="$3"
 
 usage() {
-  echo "Usage: $0 (archive|unarchive) (project) (archive_dir|projects_dir) [-hvf]"
+  echo "Usage: $0 (archive|unarchive) (project) (archive_dir|projects_dir)"
   echo ""
   echo "Commands:"
   echo "  archive         Archives the project in the archive dir"
@@ -33,50 +31,57 @@ usage() {
   echo "  -f, --fzf       Use FZF as the project chooser for archive or unarchive"
 }
 
-verbose_echo() {
-  if [ "$verbose_mode" = true ] ; then
-      echo "$1"
-  fi
-}
+check_arguments() {
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        echo "Not enough arguments provided"
+        exit 1
+    fi
 
-handle_options() {
-  while [[ "$1" == --* ]]; do
-    case "$1" in
-      --help)
-        usage
-        ;;
-      --verbose)
-        VERBOSE=true
-        ;;
-      --fzf)
-        FZF=true
-        ;;
-      *)
-        echo "Unknown option: $1"
-        usage
-        ;;
-    esac
-    shift
-  done
+    if [ ! -d "$1" ]; then
+        echo "The first argument is not a folder or does not exist."
+        exit 1
+    fi
+
+    if [ ! -d "$2" ]; then
+        echo "The second argument is not a folder or does not exist."
+        exit 1
+    fi
+
+    realpath1=$(realpath "$1")
+    realpath2=$(realpath "$2")
+
+    if [ $? -ne 0 ]; then
+        echo "Error resolving realpath for one or both paths."
+        exit 1
+    fi
+
+    if [ "$realpath1" = "$realpath2" ]; then
+        echo "Both paths refer to the same folder."
+        exit 1
+    fi
 }
 
 archive() {
-  echo "archiving..."
+  echo "archiving: $1 to $2"
+  mv $1 $2
+  sleep 1
 }
 
 unarchive() {
-  echo "unarchiving..."
+  echo "unarchiving: $1 to $2"
+  mv $1 $2
+  sleep 1
 }
+
+check_arguments "$ARG1" "$ARG2"
 
 case "$SUBCOMMAND" in
   archive)
-    handle_options "$@"
-    archive
+    archive "$ARG1" "$ARG2"
     ;;
 
   unarchive)
-    handle_options "$@"
-    unarchive
+    unarchive "$ARG1" "$ARG2"
     ;;
 
   *)
